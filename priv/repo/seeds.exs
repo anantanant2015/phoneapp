@@ -46,12 +46,11 @@ defmodule DataOperation do
         |> String.graphemes()
         |> Enum.map(fn x -> Map.get(@digit_map, x) end)
         |> Enum.join()
-        |> String.to_integer()
     end
     
     def mapBuilder(wordlist) do
         wordlist
-        |> Enum.into(%{}, fn x -> {DataOperation.wordToNumber(x), x} end)
+        |> Enum.into(%{}, fn x -> {x, %{number: DataOperation.wordToNumber(x), word: x}} end)
     end
 
     def insertDictionary(object) do
