@@ -22,8 +22,65 @@ defmodule PhoneappWeb.PageController do
     finish = DateTime.utc_now()
     DateTime.diff(start, finish, :millisecond) |> IO.inspect()
 
+    start = DateTime.utc_now()
+
+    t5 = t1 |> Enum.map(fn x ->  
+          x |> Enum.map(fn y ->  
+              values = Keyword.get_values(t4, String.to_atom(y))
+              case values do
+                [] ->
+                  [y]
+
+                _ ->
+                  values
+              end
+            end)
+      end)
+
+      finish = DateTime.utc_now()
+      DateTime.diff(start, finish, :millisecond) |> IO.inspect()
+
+    start = DateTime.utc_now()
+
+    t6 = t5 |> Enum.map(fn x -> 
+          count = Enum.count(x) - 1
+          reduce_list(count, x)
+      end)
+
+      finish = DateTime.utc_now()
+    DateTime.diff(start, finish, :millisecond) |> IO.inspect()
+
     
     render(conn, "index.html")
+  end
+
+  def reduce_list(idx = -1, _list, accumulator \\ []), do: accumulator
+
+  def reduce_list(idx, list, accumulator) do
+    newlist = duplicate_by_index(list, idx)
+    IO.inspect(newlist)
+    IO.inspect(list)
+    reduce_list(idx-1, newlist, newlist ++ accumulator)
+  end
+
+  def duplicate_by_index(list, idx) do
+    listat = Enum.at(list, idx)
+    if check_list?(listat) do
+      if (Enum.count(listat) >= (idx + 1)) do
+        {popped_list, newlist} = List.pop_at(list, idx)
+        popped_list |> Enum.map(fn x -> List.insert_at(newlist, idx, x) end)
+      end
+    else
+      [list]
+    end
+  end
+
+  def check_list?(data) do
+    is_list(data)
+  end
+
+  def check_exclusion?(data) do
+    !(String.contains?(data, "0") || String.contains?(data, "1"))
   end
 
   def merge(list, _accumulator \\ []) do
@@ -71,14 +128,6 @@ defmodule PhoneappWeb.PageController do
       end
     else
       slice(strategy, delimiter, nil, nil, accumulator)
-    end
-  end
-
-  def slicable(len) do
-    if len >= 5 do
-      true
-    else
-      false
     end
   end
 end
