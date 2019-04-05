@@ -7,10 +7,22 @@ defmodule PhoneappWeb.PageController do
 
   def index(conn, _params) do
     start = DateTime.utc_now()
-    t1 = slicer("6895256989") |> merge
+    t1 = slicer("6686787825") |> merge
     finish = DateTime.utc_now()
     DateTime.diff(start, finish, :millisecond) |> IO.inspect()
     t2 = Repo.one(Dictionary)
+    start = DateTime.utc_now()
+    t3 = t1 |> List.flatten |> Enum.uniq
+    t4 = t2.object |> Enum.map(fn {_k, v} -> 
+      if (v["number"] in t3) do
+        {String.to_atom(v["number"]), v["word"]}
+      end
+     end) |> Enum.reject(fn x -> x==nil end)
+    
+    finish = DateTime.utc_now()
+    DateTime.diff(start, finish, :millisecond) |> IO.inspect()
+
+    
     render(conn, "index.html")
   end
 
