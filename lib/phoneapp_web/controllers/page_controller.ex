@@ -42,25 +42,36 @@ defmodule PhoneappWeb.PageController do
 
     start = DateTime.utc_now()
 
-    t6 = t5 |> Enum.map(fn x -> 
-          count = Enum.count(x) - 1
-          reduce_list(count, x)
-      end)
+    # t6 = t5 |> Enum.map(fn x -> 
+    #       count = Enum.count(x)
+    #       reducer(count, x)
+    #   end)
 
-      finish = DateTime.utc_now()
+    # t7 = t5 |> List.first
+    t7 = t5 |> Enum.at(2)
+    t8 = (Enum.count(t7)-1) |> reducer([t7])
+    IO.inspect(t5)
+
+
+    finish = DateTime.utc_now()
     DateTime.diff(start, finish, :millisecond) |> IO.inspect()
+
 
     
     render(conn, "index.html")
   end
 
-  def reduce_list(idx = -1, _list, accumulator \\ []), do: accumulator
+  def reducer(idx = -1, accumulator), do: accumulator
 
-  def reduce_list(idx, list, accumulator) do
-    newlist = duplicate_by_index(list, idx)
-    IO.inspect(newlist)
-    IO.inspect(list)
-    reduce_list(idx-1, newlist, newlist ++ accumulator)
+  def reducer(idx, accumulator) do
+    newlist = accumulator |> Enum.map(
+      fn x ->
+        # IO.inspect(x)
+        duplicate_by_index(x, idx)
+      end
+    ) |> Enum.concat
+    IO.inspect newlist
+    reducer(idx - 1, newlist)
   end
 
   def duplicate_by_index(list, idx) do
@@ -68,7 +79,7 @@ defmodule PhoneappWeb.PageController do
     if check_list?(listat) do
       if (Enum.count(listat) >= (idx + 1)) do
         {popped_list, newlist} = List.pop_at(list, idx)
-        popped_list |> Enum.map(fn x -> List.insert_at(newlist, idx, x) end)
+        popped_list |> Enum.map(fn x -> List.replace_at(list, idx, x) end)
       end
     else
       [list]
