@@ -8,10 +8,7 @@ defmodule PhoneappWeb.PageController do
   def index(conn, _params) do
     start = DateTime.utc_now()
     t1 = slicer("6686787825") |> merge
-    finish = DateTime.utc_now()
-    DateTime.diff(start, finish, :millisecond) |> IO.inspect()
     t2 = Repo.one(Dictionary)
-    start = DateTime.utc_now()
     t3 = t1 |> List.flatten |> Enum.uniq
     t4 = t2.object |> Enum.map(fn {_k, v} -> 
       if (v["number"] in t3) do
@@ -19,10 +16,6 @@ defmodule PhoneappWeb.PageController do
       end
      end) |> Enum.reject(fn x -> x==nil end)
     
-    finish = DateTime.utc_now()
-    DateTime.diff(start, finish, :millisecond) |> IO.inspect()
-
-    start = DateTime.utc_now()
 
     t5 = t1 |> Enum.map(fn x ->  
           x |> Enum.map(fn y ->  
@@ -37,20 +30,8 @@ defmodule PhoneappWeb.PageController do
             end)
       end)
 
-      finish = DateTime.utc_now()
-      DateTime.diff(start, finish, :millisecond) |> IO.inspect()
-
-    start = DateTime.utc_now()
-
-    # t6 = t5 |> Enum.map(fn x -> 
-    #       count = Enum.count(x)
-    #       reducer(count, x)
-    #   end)
-
-    # t7 = t5 |> List.first
-    t7 = t5 |> Enum.at(2)
-    t8 = (Enum.count(t7)-1) |> reducer([t7])
-    IO.inspect(t5)
+    t6 = t5 |> make_pairs([])
+    IO.inspect(t6)
 
 
     finish = DateTime.utc_now()
@@ -61,23 +42,30 @@ defmodule PhoneappWeb.PageController do
     render(conn, "index.html")
   end
 
+  def make_pairs([head | tail], accumulator) do
+    newlist = (Enum.count(head)-1) |> reducer([head])
+    make_pairs(tail, newlist ++ accumulator)
+  end
+
+  def make_pairs([], accumulator) do
+    accumulator
+  end
+
   def reducer(idx = -1, accumulator), do: accumulator
 
   def reducer(idx, accumulator) do
     newlist = accumulator |> Enum.map(
       fn x ->
-        # IO.inspect(x)
         duplicate_by_index(x, idx)
       end
     ) |> Enum.concat
-    IO.inspect newlist
     reducer(idx - 1, newlist)
   end
 
   def duplicate_by_index(list, idx) do
     listat = Enum.at(list, idx)
     if check_list?(listat) do
-      if (Enum.count(listat) >= (idx + 1)) do
+      if (Enum.count(listat) >= 0) do
         {popped_list, newlist} = List.pop_at(list, idx)
         popped_list |> Enum.map(fn x -> List.replace_at(list, idx, x) end)
       end
