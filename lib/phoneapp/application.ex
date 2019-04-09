@@ -5,6 +5,8 @@ defmodule Phoneapp.Application do
 
   use Application
 
+  alias Phoneapp.EtsCache
+
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
@@ -19,7 +21,13 @@ defmodule Phoneapp.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Phoneapp.Supervisor]
-    Supervisor.start_link(children, opts)
+    Supervisor.start_link(children, opts) |> post_start()
+  end
+
+  # Start the app with cache initialized.
+  defp post_start(callback) do
+    EtsCache.start()
+    callback
   end
 
   # Tell Phoenix to update the endpoint configuration
