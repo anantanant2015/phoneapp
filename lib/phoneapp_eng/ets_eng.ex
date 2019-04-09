@@ -4,7 +4,10 @@ defmodule Phoneapp.EtsCache do
 
   def start() do
     data = Repo.one(Dictionary)
-    ets_init({"number_list", data.object})
+
+    if data != nil do
+      ets_init({"number_list", data.object})
+    end
   end
 
   def ets_lookup(key) do

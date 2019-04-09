@@ -4,12 +4,24 @@ defmodule PhoneappWeb.PageController do
   alias Phoneapp.PairEng
 
   def index(conn, _params) do
+    render(conn, "index.html", number_list: [], time: 0)
+  end
+
+  def show(conn, params) do
     start = DateTime.utc_now()
 
-    PairEng.generate_pairs(6_686_787_825) |> IO.inspect()
-    finish = DateTime.utc_now()
-    DateTime.diff(start, finish, :millisecond) |> IO.inspect()
+    number_list =
+      case String.length(params["number"]) > 0 do
+        true ->
+          params["number"] |> String.to_integer() |> PairEng.generate_pairs()
 
-    render(conn, "index.html")
+        _ ->
+          [[]]
+      end
+
+    finish = DateTime.utc_now()
+    time = DateTime.diff(finish, start, :millisecond)
+    count = Enum.count(number_list)
+    render(conn, "index.html", number_list: number_list, time: time, count: count)
   end
 end

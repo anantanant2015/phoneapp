@@ -4,38 +4,45 @@ defmodule Phoneapp.PairEng do
   alias Phoneapp.EtsCache
 
   def generate_pairs(number) do
-    sliced_number_list = number |> to_string |> slicer() |> merge()
-    flatten_sliced_number_list = sliced_number_list |> List.flatten() |> Enum.uniq()
+    if is_integer(number) && number >= 100 do
+      sliced_number_list = number |> to_string |> slicer() |> merge() |> Enum.uniq()
+      flatten_sliced_number_list = sliced_number_list |> List.flatten() |> Enum.uniq()
 
-    keyword_list = EtsCache.ets_lookup("number_list") |> List.first() |> elem(1)
+      keyword_list = EtsCache.ets_lookup("number_list") |> List.first() |> elem(1)
 
-    filtered_keyword_list =
-      keyword_list
-      |> Enum.map(fn {_k, v} ->
-        if v["number"] in flatten_sliced_number_list do
-          {String.to_atom(v["number"]), v["word"]}
-        end
-      end)
-      |> Enum.reject(fn x -> x == nil end)
-
-    sliced_number_list_with_words =
-      sliced_number_list
-      |> Enum.map(fn x ->
-        x
-        |> Enum.map(fn y ->
-          values = Keyword.get_values(filtered_keyword_list, String.to_atom(y))
-
-          case values do
-            [] ->
-              [y]
-
-            _ ->
-              values
+      filtered_keyword_list =
+        keyword_list
+        |> Enum.map(fn {_k, v} ->
+          if v["number"] in flatten_sliced_number_list do
+            {String.to_atom(v["number"]), v["word"]}
           end
         end)
-      end)
+        |> Enum.reject(fn x -> x == nil end)
 
-    sliced_number_list_with_words |> make_pairs([])
+      sliced_number_list_with_words =
+        sliced_number_list
+        |> Enum.map(fn x ->
+          x
+          |> Enum.map(fn y ->
+            values =
+              if check_list?(y) do
+                y |> List.first()
+              else
+                Keyword.get_values(filtered_keyword_list, String.to_atom(y))
+              end
+
+            case values do
+              [] ->
+                [y]
+
+              _ ->
+                values
+            end
+          end)
+        end)
+
+      sliced_number_list_with_words |> make_pairs([])
+    end
   end
 
   def make_pairs([head | tail], accumulator) do
@@ -54,9 +61,23 @@ defmodule Phoneapp.PairEng do
   end
 
   def slicer(str) do
-    Enum.map(@split_delimiter..(String.length(str) - @split_delimiter), fn x ->
-      slice(:forward, x, str, nil, []) ++ slice(:backward, x, str, nil, [])
-    end) ++ [[[str]]]
+    strlen = String.length(str)
+
+    forward_strlen =
+      if strlen >= @split_delimiter do
+        strlen - @split_delimiter
+      else
+        @split_delimiter - strlen
+      end
+
+    if strlen > 3 do
+      Enum.map(@split_delimiter..(strlen - @split_delimiter), fn x ->
+        slice(:backward, x, str, nil, [[str]])
+      end) ++
+        Enum.map(forward_strlen..@split_delimiter, fn x ->
+          slice(:forward, x, str, nil, [])
+        end)
+    end
   end
 
   defp slice(_strategy, _delimiter, nil, _list, accumulator) do
@@ -117,7 +138,7 @@ defmodule Phoneapp.PairEng do
         popped_list |> Enum.map(fn x -> List.replace_at(list, idx, x) end)
       end
     else
-      [list]
+      []
     end
   end
 
